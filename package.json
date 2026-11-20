@@ -1,0 +1,21 @@
+{
+  "name": "pi-continue",
+  "version": "0.1.0",
+  "description": "Pi extension that resumes the model when the output token limit cuts it off, with context-aware breath checkpoints.",
+  "license": "Apache-2.0",
+  "type": "module",
+  "keywords": [
+    "pi-package",
+    "pi",
+    "pi-extension"
+  ],
+  "pi": {
+    "extensions": [
+      "./pi-continue.ts"
+    ]
+  },
+  "files": [
+    "pi-continue.ts",
+    "README.md"
+  ]
+}

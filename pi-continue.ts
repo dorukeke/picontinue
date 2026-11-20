@@ -247,7 +247,7 @@ const continueDraft = (reason: string, usage?: ContextUsage): SessionBoundaryDra
 const breathDraft = (usage: ContextUsage, points: Points): SessionBoundaryDraft => ({
 	type: "custom_message",
 	customType: DRAFT_TYPE,
-	content: breathText(usage),
+	content: breathText(usage, points),
 	display: true,
 	details: { reason: "breathe", at: Math.round(usage.percent ?? 0) },
 });
@@ -345,7 +345,8 @@ export default function (pi: ExtensionAPI) {
 		// A queued user message already keeps the session going; do not stack on top of it.
 		if (boundary.context.pendingMessages.length > 0) return undefined;
 
-		const reason = truncatedBy(lastAssistant(boundary.context.contextMessages));
+		const reason =
+			truncatedBy(lastAssistant(boundary.context.contextMessages)) ?? (state.stopped ? "length" : undefined);
 		const hasWorkToResume = reason !== undefined || state.breatheDebt;
 
 		// Too many truncated turns in a row: stop pushing, ask the user instead.
@@ -353,6 +354,7 @@ export default function (pi: ExtensionAPI) {
 			note(ctx, `stopped continuing after ${CONFIG.maxStreak} truncated turns — send /continue to push on`, "warning");
 			state.streak = 0;
 			state.breatheDebt = false;
+			state.stopped = false;
 			return undefined;
 		}
 
@@ -363,6 +365,7 @@ export default function (pi: ExtensionAPI) {
 			state.breatheArmed = false;
 			state.breatheDebt = true;
 			state.breaths++;
+			state.stopped = false;
 			note(ctx, `context at ${Math.round(usage.percent ?? 0)}% (~${fmtTokens(usage.tokens)} tokens) — taking a breath before continuing`);
 			refreshStatus(ctx);
 			return { entries: [breathDraft(usage, points)], continue: true };
@@ -372,6 +375,7 @@ export default function (pi: ExtensionAPI) {
 		if (state.breatheDebt) {
 			state.breatheDebt = false;
 			state.continues++;
+			state.stopped = false;
 			if (reason) state.streak++;
 			note(ctx, "checkpoint taken — continuing from it");
 			refreshStatus(ctx);
@@ -385,6 +389,7 @@ export default function (pi: ExtensionAPI) {
 			// accompanies `continue: true` instead of checking the pre-draft preview.
 			state.streak++;
 			state.continues++;
+			state.stopped = false;
 			note(ctx, `response hit the output token limit — continuing (${state.streak}/${CONFIG.maxStreak})`);
 			refreshStatus(ctx);
 			return { entries: [continueDraft(reason, usage)], continue: true };
