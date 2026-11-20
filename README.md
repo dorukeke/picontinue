@@ -150,14 +150,21 @@ provider, so they run offline:
 
 ```bash
 cd ~/projects/picontinue
-FAKE_SCENARIO=truncation pi --no-session -ne \
+FAKE_SCENARIO=truncation pi --no-session -ne -nc \
   -e ./test/fake-provider.ts -e ./pi-continue.ts \
   --provider fake --model fake-model -p "start working"
 ```
 
+`-nc` keeps `AGENTS.md`/`CLAUDE.md` out of the run. It matters on the error path: when the provider
+errors, pi estimates the context instead of taking the provider's own usage, and that estimate
+(~1.6k tokens, and ~3.7k with the context files loaded) sails past a small `FAKE_WINDOW` and
+triggers a breath. Pass `FAKE_WINDOW=20000` to exercise the plain continue path.
+
 `FAKE_SCENARIO` selects the first turn's stop reason: `truncation` (`length`), `error` (cutoff
-reported as error text), `breathe`, or `stop` (no action expected). `-ne` keeps other installed
-extensions out of the run. `test/probe.ts` and `test/compaction-probe.ts` print pi's raw boundary
+reported as error text), `breathe`, or `stop` (no action expected). `breathe` only inflates the
+reported usage, and a breath also needs something to resume from, so test that path as
+`FAKE_SCENARIO=truncation FAKE_WINDOW=2000 FAKE_USAGE=1800`: the checkpoint lands first, then
+`continue`. `-ne` keeps other installed extensions out of the run. `test/probe.ts` and `test/compaction-probe.ts` print pi's raw boundary
 and compaction state when you need to check behaviour against your pi version.
 
 ## Requirements
