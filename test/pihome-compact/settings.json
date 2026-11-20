@@ -1,0 +1,6 @@
+{
+  "compaction": { "enabled": true, "reserveTokens": 400, "keepRecentTokens": 100 },
+  "defaultProvider": "fake",
+  "defaultModel": "fake-model",
+  "retry": { "enabled": false }
+}

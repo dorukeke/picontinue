@@ -1,0 +1,6 @@
+{
+  "compaction": { "enabled": false },
+  "defaultProvider": "fake",
+  "defaultModel": "fake-model",
+  "retry": { "enabled": false }
+}
